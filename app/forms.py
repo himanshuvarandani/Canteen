@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
-from app.models import User
+from app.models import User, Dishes
 
 
 class LoginForm(FlaskForm):
@@ -27,3 +27,15 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError('Please Use a different email address')
+
+
+class DishForm(FlaskForm):
+    dishname = StringField('Dish Name', validators=[DataRequired()])
+    amount = IntegerField('Amount', validators=[DataRequired()])
+    timetaken = IntegerField('Time taken(in minute)', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+    def validate_dishname(self, dishname):
+        dish = Dishes.query.filter_by(dishname=dishname.data).first()
+        if dish is not None:
+            raise ValidationError('This dish is already exist.')

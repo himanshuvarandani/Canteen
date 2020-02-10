@@ -4,6 +4,33 @@
 {% block content %}
     <h1>Dishes</h1>
     {% for dish in dishes %}
-    <div><p>{{ dish.dishname }}</p></div>
+    {% include "_dish.html" %}
     {% endfor %}
+    {% if current_user.username=='admin' %}
+    <form action="" method="post">
+      {{ form.hidden_tag() }}
+      <p>
+        {{ form.dishname.label }}
+        {{ form.dishname(size=30) }}<br>
+        {% for error in form.dishname.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.amount.label }}
+        {{ form.amount(size=30) }}<br>
+        {% for error in form.amount.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.timetaken.label }}
+        {{ form.timetaken(size=30) }}<br>
+        {% for error in form.timetaken.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>{{ form.submit() }}</p>
+    </form>
+    {% endif %}
 {% endblock %}

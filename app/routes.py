@@ -1,23 +1,22 @@
 from app import app, db
 from flask import render_template, redirect, url_for, request, flash
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, DishForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User
+from app.models import User, Dishes
 from werkzeug.urls import url_parse
 
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    dishes = [
-        {'dishname':'a', 'count': 0},
-        {'dishname':'b', 'count': 0},
-        {'dishname':'c', 'count': 0},
-        {'dishname':'d', 'count': 0},
-        {'dishname':'e', 'count': 0}
-        ]
-    return render_template('index.html', title='Home', dishes=dishes)
+    dishes = Dishes.query.all()
+    form = DishForm()
+    if form.validate_on_submit():
+        dish = Dishes(dishname=form.dishname.data, amount=form.amount.data, timetaken=form.timetaken.data, quantity=0)
+        db.session.add(dish)
+        db.session.commit()
+    return render_template('index.html', title='Home', dishes=dishes, form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -35,7 +34,7 @@ def login():
         if not next_page or url_parse(next_page).netloc!='':
             next_page = url_for('index')
         return redirect(next_page)
-    return render_template('/login.html', title='Sign In', form=form)
+    return render_template('login.html', title='Sign In', form=form)
 
 
 @app.route('/logout')
@@ -57,3 +56,12 @@ def register():
         flash('Congratulations, you are registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
+
+@app.route('/button/<dishname>', methods=['GET', 'POST'])
+def button(dishname):
+    if request.method == 'POST':
+        dish = Dishes.query.filter_by(dishname=dishname).first()
+        dish.quantity += 1
+        db.session.commit()
+    return redirect(url_for('index'))

@@ -19,6 +19,17 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
 
+class Dishes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    dishname = db.Column(db.String(50), index=True, unique=True)
+    amount = db.Column(db.Integer)
+    timetaken = db.Column(db.Integer)
+    quantity = db.Column(db.Integer)
+
+    def __repr__(self):
+        return '{}: Price is {} and time taken is {}'.format(self.dishname, self.amount, self.timetaken)
+
+
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
