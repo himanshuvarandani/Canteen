@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+    <h1>Dishes</h1>
+    {% for dish in dishes %}
+    <div><p>{{ dish.dishname }}</p></div>
+    {% endfor %}
+{% endblock %}
