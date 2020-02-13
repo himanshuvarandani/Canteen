@@ -1,6 +1,10 @@
-<form action="/button/{{ dish.dishname }}" method="post">
+<form action="{{ url_for('button', dishname=dish.dishname) }}" method="post">
   <h3>{{ dish.dishname }}</h3>
   <p>Amount: {{ dish.amount }}</p>
   <input type="submit" value="add">
-  <label>{{ dish.quantity }}</label>
+  {% for quantity in quantities %}
+  {% if quantity.dish.dishname == dish.dishname %}
+  <label>{{ quantity.quantity }}</label>
+  {% endif %}
+  {% endfor %}
 </form>

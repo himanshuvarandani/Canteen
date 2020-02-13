@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, redirect, url_for, request, flash
 from app.forms import LoginForm, RegistrationForm, DishForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, Dishes
+from app.models import User, Dishes, Quantity
 from werkzeug.urls import url_parse
 
 
@@ -11,12 +11,13 @@ from werkzeug.urls import url_parse
 @login_required
 def index():
     dishes = Dishes.query.all()
+    quantities = Quantity.query.filter_by(customer=current_user).all()
     form = DishForm()
     if form.validate_on_submit():
         dish = Dishes(dishname=form.dishname.data, amount=form.amount.data, timetaken=form.timetaken.data, quantity=0)
         db.session.add(dish)
         db.session.commit()
-    return render_template('index.html', title='Home', dishes=dishes, form=form)
+    return render_template('index.html', title='Home', dishes=dishes, form=form, quantities=quantities)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -62,6 +63,10 @@ def register():
 def button(dishname):
     if request.method == 'POST':
         dish = Dishes.query.filter_by(dishname=dishname).first()
-        dish.quantity += 1
+        dishquantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
+        if dishquantity is None:
+            dishquantity = Quantity(quantity=1, dish=dish, customer=current_user)
+        else:
+            dishquantity.quantity += 1
         db.session.commit()
     return redirect(url_for('index'))

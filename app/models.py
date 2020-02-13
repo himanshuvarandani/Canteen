@@ -8,6 +8,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(32), index=True, unique=True)
     email = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(32))
+    dishes = db.relationship('Quantity', backref='customer', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -25,9 +26,17 @@ class Dishes(db.Model):
     amount = db.Column(db.Integer)
     timetaken = db.Column(db.Integer)
     quantity = db.Column(db.Integer)
+    quantities = db.relationship('Quantity', backref='dish', lazy='dynamic')
 
     def __repr__(self):
         return '{}: Price is {} and time taken is {}'.format(self.dishname, self.amount, self.timetaken)
+
+
+class Quantity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer)
+    dish_id = db.Column(db.Integer, db.ForeignKey('dishes.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 @login.user_loader
