@@ -39,3 +39,12 @@ class DishForm(FlaskForm):
         dish = Dishes.query.filter_by(dishname=dishname.data).first()
         if dish is not None:
             raise ValidationError('This dish is already exist.')
+
+
+class SearchForm(FlaskForm):
+    search = StringField('Search')
+    submit = SubmitField('Search')
+
+    def validate_search(self, search):
+        if search is None:
+            raise ValidationError('Please use a valid dishname')

@@ -1,10 +1,11 @@
-<form action="{{ url_for('button', dishname=dish.dishname) }}" method="post">
-  <h3>{{ dish.dishname }}</h3>
-  <p>Amount: {{ dish.amount }}</p>
+<h3>{{ dish.dishname }}</h3>
+<p>Amount: {{ dish.amount }}</p>
+{% if current_user.username!='admin' %}
+<form action="{{ url_for('addbutton', dishname=dish.dishname) }}" method="post">
   <input type="submit" value="add">
-  {% for quantity in quantities %}
-  {% if quantity.dish.dishname == dish.dishname %}
-  <label>{{ quantity.quantity }}</label>
-  {% endif %}
-  {% endfor %}
 </form>
+<form action="{{ url_for('deletebutton', dishname=dish.dishname) }}" method="post">
+  <input type="submit" value="delete">
+</form>
+<label>{{ quantity.quantity }}</label>
+{% endif %}

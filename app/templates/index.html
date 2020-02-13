@@ -3,8 +3,16 @@
 
 {% block content %}
     <h1>Dishes</h1>
+    <form action="" method="post">
+      {{ form1.hidden_tag() }}
+      <p>{{ form1.search(size=60) }}{{ form1.submit() }}</p>
+    </form>
     {% for dish in dishes %}
+    {% for quantity in quantities %}
+    {% if quantity.dish.dishname==dish.dishname %}
     {% include "_dish.html" %}
+    {% endif %}
+    {% endfor %}
     {% endfor %}
     {% if current_user.username=='admin' %}
     <form action="" method="post">
@@ -31,6 +39,10 @@
         {% endfor %}
       </p>
       <p>{{ form.submit() }}</p>
+    </form>
+    {% else %}
+    <form action="{{ url_for('order') }}" method="post">
+      <input type="submit" name="" value="Order">
     </form>
     {% endif %}
 {% endblock %}
