@@ -17,17 +17,19 @@ def index():
     if form.validate_on_submit():
         dish = Dishes(dishname=form.dishname.data, amount=form.amount.data, timetaken=form.timetaken.data, quantity=0)
         db.session.add(dish)
+        users = User.query.all()
+        for user in users:
+            dishquantity = Quantity(quantity=1, dish=dish, customer=user)
+            db.session.add(dishquantity)
         db.session.commit()
-    if form1.validate_on_submit():
-        dishes = Dishes.query.all()
+    elif form1.validate_on_submit():
+        dishs = Dishes.query.all()
         flash("You searched for {}".format(form1.search.data))
-        for dish in dishes:
+        for dish in dishs:
             if dish.dishname==form1.search.data:
                 quantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
                 return render_template('search.html', dish=dish, quantity=quantity)
-                break
-        if dish.dishname!=form1.search.data:
-            flash("Sorry, this dish is not available here.")
+        flash("Sorry, this dish is not available here.")
     return render_template('index.html', title='Home', dishes=dishes, form=form, quantities=quantities, form1=form1)
 
 
@@ -91,7 +93,7 @@ def deletebutton(dishname):
         if dishquantity is None:
             dishquantity = Quantity(quantity=1, dish=dish, customer=current_user)
         else:
-            if dish.quantity>0:
+            if dishquantity.quantity>0:
                 dishquantity.quantity -= 1
         db.session.commit()
     return redirect(url_for('index'))
@@ -104,7 +106,20 @@ def order():
         flash("Your order is:")
         for dish in dishes:
             if dish.quantity!=0:
-                flash("\t{} {}".format(dish.quantity, dish.dish.dishname))
+                flash("{} {}".format(dish.quantity, dish.dish.dishname))
                 dish.quantity = 0
+        db.session.commit()
+    return redirect(url_for('index'))
+
+
+@app.route('/remove/<dishname>', methods=["GET", "POST"])
+def remove(dishname):
+    if request.method == 'POST':
+        flash("You removed the dish {}".format(dishname))
+        dish = Dishes.query.filter_by(dishname=dishname).first()
+        quantities = Quantity.query.filter_by(dish=dish).all()
+        for quantity in quantities:
+            db.session.delete(quantity)
+        db.session.delete(dish)
         db.session.commit()
     return redirect(url_for('index'))

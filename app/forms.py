@@ -42,9 +42,5 @@ class DishForm(FlaskForm):
 
 
 class SearchForm(FlaskForm):
-    search = StringField('Search')
+    search = StringField('Search', validators=[DataRequired()])
     submit = SubmitField('Search')
-
-    def validate_search(self, search):
-        if search is None:
-            raise ValidationError('Please use a valid dishname')
