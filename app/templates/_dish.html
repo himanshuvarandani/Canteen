@@ -1,13 +1,15 @@
 <h3>{{ dish.dishname }}</h3>
 <p>Amount: {{ dish.amount }}</p>
 {% if current_user.username!='admin' %}
-<form action="{{ url_for('addbutton', dishname=dish.dishname) }}" method="post">
+<form action="{{ url_for('addbutton', dishname=dish.dishname, next_page=next_page) }}" method="post">
   <input type="submit" value="add">
 </form>
-<form action="{{ url_for('deletebutton', dishname=dish.dishname) }}" method="post">
+{% if quantity.quantity %}
+<form action="{{ url_for('deletebutton', dishname=dish.dishname, next_page=next_page) }}" method="post">
   <input type="submit" value="delete">
 </form>
 <label>{{ quantity.quantity }}</label>
+{% endif %}
 {% else %}
 <form action="{{ url_for('remove', dishname=dish.dishname) }}" method="post">
   <input type="submit" value="Remove">

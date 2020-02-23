@@ -19,18 +19,26 @@ def index():
         db.session.add(dish)
         users = User.query.all()
         for user in users:
-            dishquantity = Quantity(quantity=1, dish=dish, customer=user)
+            dishquantity = Quantity(quantity=0, dish=dish, customer=user)
             db.session.add(dishquantity)
         db.session.commit()
     elif form1.validate_on_submit():
-        dishs = Dishes.query.all()
-        flash("You searched for {}".format(form1.search.data))
-        for dish in dishs:
-            if dish.dishname==form1.search.data:
-                quantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
-                return render_template('search.html', dish=dish, quantity=quantity)
-        flash("Sorry, this dish is not available here.")
-    return render_template('index.html', title='Home', dishes=dishes, form=form, quantities=quantities, form1=form1)
+        return redirect(url_for('search', dishname=form1.search.data))
+    return render_template('index.html', title='Home', dishes=dishes, form=form, quantities=quantities, form1=form1, next_page='index')
+
+
+@app.route('/search/<dishname>', methods=["GET", "POST"])
+def search(dishname):
+    form = SearchForm()
+    if form.validate_on_submit():
+        return redirect(url_for('search', dishname=form.search.data))
+    dishes = Dishes.query.all()
+    for dish in dishes:
+        if dish.dishname.lower()==dishname.lower():
+            quantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
+            return render_template('search.html', dish=dish, quantity=quantity, next_page='search', form=form)
+    flash("Sorry, this dish is not available here.")
+    return redirect(url_for('index'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -72,8 +80,8 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/addbutton/<dishname>', methods=['GET', 'POST'])
-def addbutton(dishname):
+@app.route('/addbutton/<dishname>/<next_page>', methods=['GET', 'POST'])
+def addbutton(dishname, next_page):
     if request.method == 'POST':
         dish = Dishes.query.filter_by(dishname=dishname).first()
         dishquantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
@@ -82,11 +90,14 @@ def addbutton(dishname):
         else:
             dishquantity.quantity += 1
         db.session.commit()
-    return redirect(url_for('index'))
+    if next_page=='index':
+        return redirect(url_for('index'))
+    else:
+        return redirect(url_for('search', dishname=dishname))
 
 
-@app.route('/deletebutton/<dishname>', methods=['GET', 'POST'])
-def deletebutton(dishname):
+@app.route('/deletebutton/<dishname>/<next_page>', methods=['GET', 'POST'])
+def deletebutton(dishname, next_page):
     if request.method == 'POST':
         dish = Dishes.query.filter_by(dishname=dishname).first()
         dishquantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
@@ -96,18 +107,26 @@ def deletebutton(dishname):
             if dishquantity.quantity>0:
                 dishquantity.quantity -= 1
         db.session.commit()
-    return redirect(url_for('index'))
+    if next_page=='index':
+        return redirect(url_for('index'))
+    else:
+        return redirect(url_for('search', dishname=dishname))
 
 
 @app.route('/order', methods=["GET", "POST"])
 def order():
     if request.method == 'POST':
         dishes = Quantity.query.filter_by(customer=current_user).all()
-        flash("Your order is:")
+        a = 0
         for dish in dishes:
             if dish.quantity!=0:
+                if a==0:
+                    flash("Your order is:")
+                    a = 1
                 flash("{} {}".format(dish.quantity, dish.dish.dishname))
                 dish.quantity = 0
+        if a==0:
+            flash("Please select a dish.")
         db.session.commit()
     return redirect(url_for('index'))
 

@@ -2,6 +2,10 @@
 
 
 {% block content %}
+<form action="" method="post">
+  {{ form.hidden_tag() }}
+  <p>{{ form.search(size=60) }}{{ form.submit() }}</p>
+</form>
 {% include "_dish.html" %}<br>
 <a href="{{ url_for('index') }}">Back</a>
 {% endblock %}
