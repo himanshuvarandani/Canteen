@@ -1,6 +1,7 @@
 from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from datetime import datetime
 
 
 class User(UserMixin, db.Model):
@@ -9,6 +10,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(32))
     dishes = db.relationship('Quantity', backref='customer', lazy='dynamic')
+    history = db.relationship('History', backref='customer', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -27,6 +29,7 @@ class Dishes(db.Model):
     timetaken = db.Column(db.Integer)
     quantity = db.Column(db.Integer)
     quantities = db.relationship('Quantity', backref='dish', lazy='dynamic')
+    order = db.relationship('Orders', backref='dish', lazy='dynamic')
 
     def __repr__(self):
         return '{}: Price is {} and time taken is {}'.format(self.dishname, self.amount, self.timetaken)
@@ -37,6 +40,20 @@ class Quantity(db.Model):
     quantity = db.Column(db.Integer)
     dish_id = db.Column(db.Integer, db.ForeignKey('dishes.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+
+class History(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    timestamp = db.Column(db.DateTime, default = datetime.utcnow)
+    orders = db.relationship('Orders', backref='history', lazy='dynamic')
+
+
+class Orders(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    history_id = db.Column(db.Integer, db.ForeignKey('history.id'))
+    quantity = db.Column(db.Integer)
+    dish_id = db.Column(db.Integer, db.ForeignKey('dishes.id'))
 
 
 @login.user_loader

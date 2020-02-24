@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+  <h1>History</h1>
+  <ul>
+    {% if current_user.username=='admin' %}
+      <li>You add these dishes</li>
+    {% endif %}
+    {% for (history, orders) in l %}
+      <li>At {{ history.timestamp }}</li>
+      <ol>
+        {% for order in orders %}
+          {% if current_user.username=='admin' %}
+            <li>{{ order.dish.dishname }}
+          {% else %}
+            <li>{{ order.quantity }} {{ order.dish.dishname }}</li>
+          {% endif %}
+        {% endfor %}
+      </ol>
+    {% endfor %}
+  </ul>
+{% endblock %}

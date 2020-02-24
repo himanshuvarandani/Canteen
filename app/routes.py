@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, redirect, url_for, request, flash
 from app.forms import LoginForm, RegistrationForm, DishForm, SearchForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, Dishes, Quantity
+from app.models import User, Dishes, Quantity, History, Orders
 from werkzeug.urls import url_parse
 
 
@@ -21,6 +21,10 @@ def index():
         for user in users:
             dishquantity = Quantity(quantity=0, dish=dish, customer=user)
             db.session.add(dishquantity)
+        history = History(customer=current_user)
+        db.session.add(history)
+        order = Orders(history=history, quantity=0, dish=dish)
+        db.session.add(order)
         db.session.commit()
     elif form1.validate_on_submit():
         return redirect(url_for('search', dishname=form1.search.data))
@@ -122,7 +126,11 @@ def order():
             if dish.quantity!=0:
                 if a==0:
                     flash("Your order is:")
+                    history = History(customer=current_user)
+                    db.session.add(history)
                     a = 1
+                order = Orders(history=history, quantity=dish.quantity, dish=dish.dish)
+                db.session.add(order)
                 flash("{} {}".format(dish.quantity, dish.dish.dishname))
                 dish.quantity = 0
         if a==0:
@@ -142,3 +150,13 @@ def remove(dishname):
         db.session.delete(dish)
         db.session.commit()
     return redirect(url_for('index'))
+
+
+@app.route('/history', methods=["GET", "POST"])
+def history():
+    histories = History.query.filter_by(customer=current_user).all()
+    l = []
+    for history in histories:
+        orders = Orders.query.filter_by(history=history).all()
+        l.append((history, orders))
+    return render_template('history.html', l=l)
