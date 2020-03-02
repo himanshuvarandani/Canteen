@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>Recent Orders</h1>
+<ul>
+  <ol>
+  {% for (recent_order, history, orders) in l %}
+  <li>Order:</li>
+  <ul>
+    <li>At {{ history.timestamp }}</li>
+    <li>Dishes</li>
+    <ol>
+      {% for dish in orders %}
+        <li>{{ dish.quantity }} {{ dish.dish.dishname }}</li>
+      {% endfor %}
+    </ol>
+    <li>It will be ready at {{ recent_order.timestamp }}</li>
+    <form action="{{ url_for('cancel', order_id=recent_order.id) }}" method="post">
+      <input type="submit" name="" value="Cancel">
+    </form>
+  </ul>
+  {% endfor %}
+  </ol>
+</ul>
+{% endblock %}

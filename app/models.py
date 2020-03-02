@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(32))
     dishes = db.relationship('Quantity', backref='customer', lazy='dynamic')
     history = db.relationship('History', backref='customer', lazy='dynamic')
+    recent_orders = db.relationship('RecentOrders', backref='customer', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -47,13 +48,21 @@ class History(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     timestamp = db.Column(db.DateTime, default = datetime.utcnow)
     orders = db.relationship('Orders', backref='history', lazy='dynamic')
-
+    status = db.Column(db.Integer, default=0.5)
+    recent_order_id = db.Column(db.Integer, db.ForeignKey('recent_orders.id'))
 
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     history_id = db.Column(db.Integer, db.ForeignKey('history.id'))
     quantity = db.Column(db.Integer)
     dish_id = db.Column(db.Integer, db.ForeignKey('dishes.id'))
+
+
+class RecentOrders(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    history = db.relationship('History', backref='recent_order', lazy='dynamic')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    timestamp = db.Column(db.DateTime)
 
 
 @login.user_loader

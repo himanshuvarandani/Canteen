@@ -18,6 +18,9 @@
           {% endif %}
         {% endfor %}
       </ol>
+      {% if history.status==0 %}
+        <span style="color:orange;">Order Cancelled</span>
+      {% endif %}
     {% endfor %}
   </ul>
 {% endblock %}
