@@ -12,9 +12,10 @@
     <li>Dishes</li>
     <ol>
       {% for dish in orders %}
-        <li>{{ dish.quantity }} {{ dish.dish.dishname }}</li>
+        <li>{{ dish.quantity }} {{ dish.dish.dishname }} {{ dish.dish.amount*dish.quantity }} rupees</li>
       {% endfor %}
     </ol>
+    <li>Total Cost is: Rs. {{ history.total_amount }}</li>
     <li>It will be ready at {{ recent_order.timestamp }}</li>
     <form action="{{ url_for('cancel', order_id=recent_order.id) }}" method="post">
       <input type="submit" name="" value="Cancel">

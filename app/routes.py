@@ -13,6 +13,24 @@ from config import Config
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
+    recent_orders = RecentOrders.query.filter_by(customer=current_user).all()
+    l = []
+    t = app.config['T']
+    for recent_order in recent_orders:
+        history = History.query.filter_by(recent_order=recent_order).first()
+        if recent_order.timestamp<=datetime.utcnow():
+            orders = Orders.query.filter_by(history=history).all()
+            for dish in orders:
+                t -= int(dish.quantity)*int(dish.dish.timetaken)
+            history.status = 1
+            db.session.delete(recent_order)
+    if t == 0:
+        flash('Your order will be accepted fast.')
+    else:
+        flash('Your order will be accepted after {} minutes'.format(t))
+    app.config['T'] = t
+    db.session.commit()
+
     dishes = Dishes.query.all()
     quantities = Quantity.query.filter_by(customer=current_user).all()
     form = DishForm()
@@ -126,7 +144,7 @@ def order():
     print(t)
     if request.method == 'POST':
         dishes = Quantity.query.filter_by(customer=current_user).all()
-        a = 0
+        a, ta = 0, 0
         for dish in dishes:
             if dish.quantity!=0:
                 if a==0:
@@ -137,14 +155,16 @@ def order():
                     db.session.add(history)
                     a = 1
                 t += int(dish.dish.timetaken)*int(dish.quantity)
+                ta += int(dish.dish.amount)*int(dish.quantity)
                 order = Orders(history=history, quantity=dish.quantity, dish=dish.dish)
                 db.session.add(order)
-                flash("{} {}".format(dish.quantity, dish.dish.dishname))
+                flash("{} {} {}".format(dish.quantity, dish.dish.dishname, dish.quantity*dish.dish.amount))
                 dish.quantity = 0
         if a==0:
             flash("Please select a dish.")
         else:
             recent_order.timestamp += timedelta(minutes=t)
+            history.total_amount = ta
             app.config['T'] = t
             db.session.commit()
     return redirect(url_for('index'))
@@ -183,6 +203,9 @@ def history():
             l.append((history, orders))
     app.config['T'] = t
     db.session.commit()
+    if l == []:
+        flash("You do not order anything till now.")
+        return redirect(url_for('index'))
     return render_template('history.html', l=l)
 
 
@@ -204,6 +227,10 @@ def recent_orders():
             l.append((recent_order, history, orders))
     app.config['T'] = t
     db.session.commit()
+    if l == []:
+        flash("You do not order anything till now or your orders are completed or cancelled.")
+        flash("See the status in history.")
+        return redirect(url_for('index'))
     return render_template('recent_orders.html', l=l)
 
 
@@ -211,12 +238,16 @@ def recent_orders():
 def cancel(order_id):
     recent_order = RecentOrders.query.filter_by(id=order_id).first()
     history = History.query.filter_by(recent_order=recent_order).first()
+    flash('Your order at {} is cancelled'.format(history.timestamp))
+    flash('Details:')
     t = app.config['T']
     orders = Orders.query.filter_by(history=history).all()
     for dish in orders:
+        flash("{} {} {}".format(dish.quantity, dish.dish.dishname, dish.dish.amount))
         t -= int(dish.quantity)*int(dish.dish.timetaken)
+    flash('Total cost: {}'.format(history.total_amount))
     app.config['T'] = t
     history.status = 0
     db.session.delete(recent_order)
     db.session.commit()
-    return redirect(url_for('recent_orders'))
+    return redirect(url_for('index'))

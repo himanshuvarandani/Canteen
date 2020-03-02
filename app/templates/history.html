@@ -14,10 +14,11 @@
           {% if current_user.username=='admin' %}
             <li>{{ order.dish.dishname }}
           {% else %}
-            <li>{{ order.quantity }} {{ order.dish.dishname }}</li>
+            <li>{{ order.quantity }} {{ order.dish.dishname }} {{ (order.dish.amount)*(order.quantity) }}</li>
           {% endif %}
         {% endfor %}
       </ol>
+      <ul><li>Total cost: Rs. {{ history.total_amount }}</li></ul>
       {% if history.status==0 %}
         <span style="color:orange;">Order Cancelled</span>
       {% endif %}
