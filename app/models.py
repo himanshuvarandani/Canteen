@@ -2,6 +2,7 @@ from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
+from datetime import timedelta
 
 
 class User(UserMixin, db.Model):
@@ -46,7 +47,7 @@ class Quantity(db.Model):
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    timestamp = db.Column(db.DateTime, default = datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=(datetime.now()-timedelta(minutes=330)))
     orders = db.relationship('Orders', backref='history', lazy='dynamic')
     status = db.Column(db.Integer, default=0.5)
     recent_order_id = db.Column(db.Integer, db.ForeignKey('recent_orders.id'))

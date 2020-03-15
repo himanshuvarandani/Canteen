@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 
-{% block content %}
+{% block app_content %}
   <h1>History</h1>
   <ul>
     {% if current_user.username=='admin' %}
-      <li>You add these dishes</li>
+      <li>You added these dishes</li>
     {% endif %}
     {% for (history, orders) in l %}
-      <li>At {{ history.timestamp }}</li>
+      <li>At {{ moment(history.timestamp).format('LLLL') }}</li>
       <ol>
         {% for order in orders %}
           {% if current_user.username=='admin' %}

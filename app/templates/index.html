@@ -1,12 +1,14 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 
-{% block content %}
+{% block app_content %}
     <h1>Dishes</h1>
-    <form action="" method="post">
-      {{ form1.hidden_tag() }}
-      <p>{{ form1.search(size=60) }}{{ form1.submit() }}</p>
-    </form>
+    <div class="row">
+      <div class="col-md-4">
+        {{ wtf.quick_form(form1) }}
+      </div>
+    </div>
     {% for dish in dishes %}
     {% for quantity in quantities %}
     {% if quantity.dish.dishname==dish.dishname %}
@@ -15,31 +17,11 @@
     {% endfor %}
     {% endfor %}
     {% if current_user.username=='admin' %}
-    <form action="" method="post">
-      {{ form.hidden_tag() }}
-      <p>
-        {{ form.dishname.label }}
-        {{ form.dishname(size=30) }}<br>
-        {% for error in form.dishname.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-      </p>
-      <p>
-        {{ form.amount.label }}
-        {{ form.amount(size=30) }}<br>
-        {% for error in form.amount.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-      </p>
-      <p>
-        {{ form.timetaken.label }}
-        {{ form.timetaken(size=30) }}<br>
-        {% for error in form.timetaken.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-      </p>
-      <p>{{ form.submit() }}</p>
-    </form>
+    <div class="row">
+      <div class="col-md-4">
+        {{ wtf.quick_form(form) }}
+      </div>
+    </div>
     {% else %}
     <form action="{{ url_for('order') }}" method="post">
       <input type="submit" name="" value="Order">

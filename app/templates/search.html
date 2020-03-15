@@ -1,11 +1,13 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 
-{% block content %}
-<form action="" method="post">
-  {{ form.hidden_tag() }}
-  <p>{{ form.search(size=60) }}{{ form.submit() }}</p>
-</form>
+{% block app_content %}
+<div class="row">
+  <div class="col-md-4">
+    {{ wtf.quick_form(form) }}
+  </div>
+</div>
 {% include "_dish.html" %}<br>
 <a href="{{ url_for('index') }}">Back</a>
 {% endblock %}

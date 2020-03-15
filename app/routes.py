@@ -1,4 +1,4 @@
-from app import app, db
+from app import app, db, mail
 from flask import render_template, redirect, url_for, request, flash
 from app.forms import LoginForm, RegistrationForm, DishForm, SearchForm
 from flask_login import current_user, login_user, logout_user, login_required
@@ -7,18 +7,30 @@ from werkzeug.urls import url_parse
 from datetime import datetime
 from datetime import timedelta
 from config import Config
+from threading import Thread
+from flask_mail import Message
+import time
+
+
+def notification(app, t, user_email):
+    time.sleep((t-1)*60)
+    with app.app_context():
+        msg = Message('Order Completion', sender=app.config['ADMINS'][0], recipients=[user_email])
+        msg.body = 'Your order is completed.'
+        msg.html = '<h1>Order Completion</h1>'
+        mail.send(msg)
 
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    recent_orders = RecentOrders.query.filter_by(customer=current_user).all()
+    recent_orders = RecentOrders.query.all()
     l = []
     t = app.config['T']
     for recent_order in recent_orders:
         history = History.query.filter_by(recent_order=recent_order).first()
-        if recent_order.timestamp<=datetime.utcnow():
+        if recent_order.timestamp+timedelta(minutes=330)<=datetime.now():
             orders = Orders.query.filter_by(history=history).all()
             for dish in orders:
                 t -= int(dish.quantity)*int(dish.dish.timetaken)
@@ -61,7 +73,7 @@ def search(dishname):
     for dish in dishes:
         if dish.dishname.lower()==dishname.lower():
             quantity = Quantity.query.filter_by(customer=current_user).filter_by(dish=dish).first()
-            return render_template('search.html', dish=dish, quantity=quantity, next_page='search', form=form)
+            return render_template('search.html', title='Search', dish=dish, quantity=quantity, next_page='search', form=form)
     flash("Sorry, this dish is not available here.")
     return redirect(url_for('index'))
 
@@ -99,6 +111,10 @@ def register():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         db.session.add(user)
+        dishes = Dishes.query.all()
+        for dish in dishes:
+            dishquantity = Quantity(quantity=0, dish=dish, customer=user)
+            db.session.add(dishquantity)
         db.session.commit()
         flash('Congratulations, you are registered user!')
         return redirect(url_for('login'))
@@ -141,7 +157,6 @@ def deletebutton(dishname, next_page):
 @app.route('/order', methods=['GET', 'POST'])
 def order():
     t = app.config['T']
-    print(t)
     if request.method == 'POST':
         dishes = Quantity.query.filter_by(customer=current_user).all()
         a, ta = 0, 0
@@ -149,7 +164,7 @@ def order():
             if dish.quantity!=0:
                 if a==0:
                     flash("Your order is:")
-                    recent_order = RecentOrders(customer=current_user, timestamp=datetime.utcnow())
+                    recent_order = RecentOrders(customer=current_user, timestamp=(datetime.now()-timedelta(minutes=330)))
                     history = History(customer=current_user, recent_order=recent_order)
                     db.session.add(recent_order)
                     db.session.add(history)
@@ -163,6 +178,8 @@ def order():
         if a==0:
             flash("Please select a dish.")
         else:
+            user_email = current_user.email
+            Thread(target=notification, args=(app, t, user_email)).start()
             recent_order.timestamp += timedelta(minutes=t)
             history.total_amount = ta
             app.config['T'] = t
@@ -191,7 +208,7 @@ def history():
     for history in histories:
         if history.status == 0.5:
             recent_order = RecentOrders.query.filter_by(id=history.recent_order_id).first()
-            if recent_order.timestamp<=datetime.utcnow():
+            if recent_order.timestamp+timedelta(minutes=330)<=datetime.now():
                 orders = Orders.query.filter_by(history=history).all()
                 for dish in orders:
                     t -= int(dish.quantity)*int(dish.dish.timetaken)
@@ -206,7 +223,7 @@ def history():
     if l == []:
         flash("You do not order anything till now.")
         return redirect(url_for('index'))
-    return render_template('history.html', l=l)
+    return render_template('history.html', title='History', l=l)
 
 
 @app.route('/recent_orders', methods=['GET', 'POST'])
@@ -216,7 +233,7 @@ def recent_orders():
     t = app.config['T']
     for recent_order in recent_orders:
         history = History.query.filter_by(recent_order=recent_order).first()
-        if recent_order.timestamp<=datetime.utcnow():
+        if recent_order.timestamp+timedelta(minutes=330)<=datetime.now():
             orders = Orders.query.filter_by(history=history).all()
             for dish in orders:
                 t -= int(dish.quantity)*int(dish.dish.timetaken)
@@ -231,7 +248,7 @@ def recent_orders():
         flash("You do not order anything till now or your orders are completed or cancelled.")
         flash("See the status in history.")
         return redirect(url_for('index'))
-    return render_template('recent_orders.html', l=l)
+    return render_template('recent_orders.html', title='Recent Orders', l=l)
 
 
 @app.route('/cancel/<order_id>', methods=['GET', 'POST'])
