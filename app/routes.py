@@ -200,8 +200,8 @@ def remove(dishname):
     return redirect(url_for('index'))
 
 
-@app.route('/history')
-def history():
+@app.route('/history/<start>')
+def history(start):
     histories = History.query.filter_by(customer=current_user).all()
     l = []
     t = app.config['T']
@@ -218,12 +218,18 @@ def history():
         else:
             orders = Orders.query.filter_by(history=history).all()
             l.append((history, orders))
+    total = len(l)
     app.config['T'] = t
     db.session.commit()
     if l == []:
         flash("You do not order anything till now.")
         return redirect(url_for('index'))
-    return render_template('history.html', title='History', l=l)
+    start = int(start)
+    if start+10<total:
+        end = start+10
+    else:
+        end = total
+    return render_template('history.html', title='History', l=l, start=start, end=end, total=total)
 
 
 @app.route('/recent_orders', methods=['GET', 'POST'])

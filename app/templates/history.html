@@ -3,25 +3,31 @@
 
 {% block app_content %}
   <h1>History</h1>
-  <ul>
+  <ol start={{ start }}>
     {% if current_user.username=='admin' %}
       <li>You added these dishes</li>
     {% endif %}
-    {% for (history, orders) in l %}
-      <li>At {{ moment(history.timestamp).format('LLLL') }}</li>
-      <ol>
-        {% for order in orders %}
+    {% for i in range(start-1, end-1) %}
+      <li>At {{ moment(l[i][0].timestamp).format('LLLL') }}</li>
+      <ul>
+        {% for order in l[i][1] %}
           {% if current_user.username=='admin' %}
             <li>{{ order.dish.dishname }}
           {% else %}
             <li>{{ order.quantity }} {{ order.dish.dishname }} {{ (order.dish.amount)*(order.quantity) }}</li>
           {% endif %}
         {% endfor %}
-      </ol>
-      <ul><li>Total cost: Rs. {{ history.total_amount }}</li></ul>
-      {% if history.status==0 %}
+      </ul>
+      <ul><li>Total cost: Rs. {{ l[i][0].total_amount }}</li></ul>
+      {% if l[i][0].status==0 %}
         <span style="color:orange;">Order Cancelled</span>
       {% endif %}
     {% endfor %}
-  </ul>
+    {% if start != 1 %}
+      <a href="{{ url_for('history', start=start-10) }}">Previous</a>
+    {% endif %}
+    {% if end != total %}
+      <a href="{{ url_for('history', start=end) }}">Next</a>
+    {% endif %}
+  </ol>
 {% endblock %}

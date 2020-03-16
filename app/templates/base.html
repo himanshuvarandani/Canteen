@@ -26,7 +26,7 @@
             {% if current_user.is_anonymous %}
             <li><a href="{{ url_for('login') }}">Login</a></li>
             {% else %}
-            <li><a href="{{ url_for('history') }}">History</a></li>
+            <li><a href="{{ url_for('history', start=1) }}">History</a></li>
             <li><a href="{{ url_for('recent_orders') }}">Recent Orders</a></li>
             <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% endif %}
