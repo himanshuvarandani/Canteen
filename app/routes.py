@@ -65,6 +65,7 @@ def index():
 
 
 @app.route('/search/<dishname>', methods=["GET", "POST"])
+@login_required
 def search(dishname):
     form = SearchForm()
     if form.validate_on_submit():
@@ -97,12 +98,14 @@ def login():
 
 
 @app.route('/logout')
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
 
 @app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -122,6 +125,7 @@ def register():
 
 
 @app.route('/addbutton/<dishname>/<next_page>', methods=['GET', 'POST'])
+@login_required
 def addbutton(dishname, next_page):
     if request.method == 'POST':
         dish = Dishes.query.filter_by(dishname=dishname).first()
@@ -138,6 +142,7 @@ def addbutton(dishname, next_page):
 
 
 @app.route('/deletebutton/<dishname>/<next_page>', methods=['GET', 'POST'])
+@login_required
 def deletebutton(dishname, next_page):
     if request.method == 'POST':
         dish = Dishes.query.filter_by(dishname=dishname).first()
@@ -155,6 +160,7 @@ def deletebutton(dishname, next_page):
 
 
 @app.route('/order', methods=['GET', 'POST'])
+@login_required
 def order():
     t = app.config['T']
     if request.method == 'POST':
@@ -188,6 +194,7 @@ def order():
 
 
 @app.route('/remove/<dishname>', methods=['GET', 'POST'])
+@login_required
 def remove(dishname):
     if request.method == 'POST':
         flash("You removed the dish {}".format(dishname))
@@ -201,6 +208,7 @@ def remove(dishname):
 
 
 @app.route('/history/<start>')
+@login_required
 def history(start):
     histories = History.query.filter_by(customer=current_user).all()
     l = []
@@ -225,6 +233,8 @@ def history(start):
         flash("You do not order anything till now.")
         return redirect(url_for('index'))
     start = int(start)
+    if start>total:
+        return render_template('404.html') or 404
     if start+10<total:
         end = start+10
     else:
@@ -233,6 +243,7 @@ def history(start):
 
 
 @app.route('/recent_orders', methods=['GET', 'POST'])
+@login_required
 def recent_orders():
     recent_orders = RecentOrders.query.filter_by(customer=current_user).all()
     l = []
@@ -258,6 +269,7 @@ def recent_orders():
 
 
 @app.route('/cancel/<order_id>', methods=['GET', 'POST'])
+@login_required
 def cancel(order_id):
     recent_order = RecentOrders.query.filter_by(id=order_id).first()
     history = History.query.filter_by(recent_order=recent_order).first()
