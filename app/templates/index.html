@@ -9,22 +9,25 @@
         {{ wtf.quick_form(form1) }}
       </div>
     </div>
+
     {% for dish in dishes %}
-    {% for quantity in quantities %}
-    {% if quantity.dish.dishname==dish.dishname %}
-    {% include "_dish.html" %}
-    {% endif %}
+      {% for quantity in quantities %}
+        {% if quantity.dish.dishname==dish.dishname %}
+          {% include "_dish.html" %}
+        {% endif %}
+      {% endfor %}
     {% endfor %}
-    {% endfor %}
+    <br>
+
     {% if current_user.username=='admin' %}
-    <div class="row">
-      <div class="col-md-4">
-        {{ wtf.quick_form(form) }}
+      <div class="row">
+        <div class="col-md-4">
+          {{ wtf.quick_form(form) }}
+        </div>
       </div>
-    </div>
     {% else %}
-    <form action="{{ url_for('order') }}" method="post">
-      <input type="submit" name="" value="Order">
-    </form>
+      <form action="{{ url_for('order') }}" method="post">
+        <input type="submit" name="" value="Order">
+      </form>
     {% endif %}
 {% endblock %}

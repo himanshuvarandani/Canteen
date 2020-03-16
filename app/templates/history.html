@@ -7,10 +7,11 @@
     {% if current_user.username=='admin' %}
       <li>You added these dishes</li>
     {% endif %}
-    {% for i in range(start-1, end-1) %}
-      <li>At {{ moment(l[i][0].timestamp).format('LLLL') }}</li>
+
+    {% for i in range(start, end) %}
+      <li>At {{ moment(L[total-i][0].timestamp).format('LLLL') }}</li>
       <ul>
-        {% for order in l[i][1] %}
+        {% for order in L[total-i][1] %}
           {% if current_user.username=='admin' %}
             <li>{{ order.dish.dishname }}
           {% else %}
@@ -18,14 +19,17 @@
           {% endif %}
         {% endfor %}
       </ul>
-      <ul><li>Total cost: Rs. {{ l[i][0].total_amount }}</li></ul>
-      {% if l[i][0].status==0 %}
-        <span style="color:orange;">Order Cancelled</span>
+      <ul><li>Total cost: Rs. {{ L[total-i][0].total_amount }}</li></ul>
+
+      {% if L[total-i][0].status==0 %}
+        <span style="color:orange;">Order Cancelled</span><br>
       {% endif %}
     {% endfor %}
+
     {% if start != 1 %}
       <a href="{{ url_for('history', start=start-10) }}">Previous</a>
     {% endif %}
+
     {% if end != total %}
       <a href="{{ url_for('history', start=end) }}">Next</a>
     {% endif %}

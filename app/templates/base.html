@@ -18,17 +18,19 @@
           </button>
           <a class="navbar-brand" href="{{ url_for('index') }}">Canteen</a>
         </div>
+
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav">
             <li><a href="{{ url_for('index') }}">Home</a></li>
           </ul>
+
           <ul class="nav navbar-nav navbar-right">
             {% if current_user.is_anonymous %}
-            <li><a href="{{ url_for('login') }}">Login</a></li>
+              <li><a href="{{ url_for('login') }}">Login</a></li>
             {% else %}
-            <li><a href="{{ url_for('history', start=1) }}">History</a></li>
-            <li><a href="{{ url_for('recent_orders') }}">Recent Orders</a></li>
-            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+              <li><a href="{{ url_for('history', start=1) }}">History</a></li>
+              <li><a href="{{ url_for('recent_orders') }}">Recent Orders</a></li>
+              <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% endif %}
           </ul>
         </div>
@@ -55,5 +57,4 @@
 {% block scripts %}
   {{ super() }}
   {{ moment.include_moment() }}
-  {{ moment.locale(auto_detect=True) }}
 {% endblock %}

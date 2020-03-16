@@ -3,11 +3,12 @@
 
 
 {% block app_content %}
-<div class="row">
-  <div class="col-md-4">
-    {{ wtf.quick_form(form) }}
+  <div class="row">
+    <div class="col-md-4">
+      {{ wtf.quick_form(form) }}
+    </div>
   </div>
-</div>
-{% include "_dish.html" %}<br>
-<a href="{{ url_for('index') }}">Back</a>
+
+  {% include "_dish.html" %}<br>
+  <a href="{{ url_for('index') }}">Back</a>
 {% endblock %}

@@ -2,26 +2,26 @@
 
 
 {% block app_content %}
-<h1>Recent Orders</h1>
-<ul>
-  <ol>
-  {% for (recent_order, history, orders) in l %}
-  <li>Order:</li>
+  <h1>Recent Orders</h1>
   <ul>
-    <li>{{ moment(history.timestamp).calendar() }}</li>
-    <li>Dishes</li>
     <ol>
-      {% for dish in orders %}
-        <li>{{ dish.quantity }} {{ dish.dish.dishname }} {{ dish.dish.amount*dish.quantity }} rupees</li>
+      {% for (recent_order, history, orders) in L %}
+        <li>Order:</li>
+        <ul>
+          <li>{{ moment(history.timestamp).calendar() }}</li>
+          <li>Dishes</li>
+          <ol>
+            {% for dish in orders %}
+              <li>{{ dish.quantity }} {{ dish.dish.dishname }} {{ dish.dish.amount*dish.quantity }} rupees</li>
+            {% endfor %}
+          </ol>
+          <li>Total Cost is: Rs. {{ history.total_amount }}</li>
+          <li>It will be ready {{ moment(recent_order.timestamp).fromNow() }}</li>
+          <form action="{{ url_for('cancel', order_id=recent_order.id) }}" method="post">
+            <input type="submit" name="" value="Cancel">
+          </form>
+        </ul>
       {% endfor %}
     </ol>
-    <li>Total Cost is: Rs. {{ history.total_amount }}</li>
-    <li>It will be ready {{ moment(recent_order.timestamp).fromNow() }}</li>
-    <form action="{{ url_for('cancel', order_id=recent_order.id) }}" method="post">
-      <input type="submit" name="" value="Cancel">
-    </form>
   </ul>
-  {% endfor %}
-  </ol>
-</ul>
 {% endblock %}
