@@ -37,10 +37,11 @@ def index():
                 wait_time -= int(dish.quantity)*int(dish.dish.timetaken)
             history.status = 1
             db.session.delete(recent_order)
-    if wait_time == 0:
-        flash('Your order will be accepted fast.')
-    else:
-        flash('Your order will be accepted after {} minutes'.format(wait_time))
+    if current_user.username != "admin":
+        if wait_time == 0:
+            flash('Your order will be accepted fast.')
+        else:
+            flash('Your order will be accepted after {} minutes'.format(wait_time))
     app.config['WAIT_TIME'] = wait_time
     db.session.commit()
 

@@ -28,8 +28,10 @@
             {% if current_user.is_anonymous %}
               <li><a href="{{ url_for('login') }}">Login</a></li>
             {% else %}
-              <li><a href="{{ url_for('history', start=1) }}">History</a></li>
-              <li><a href="{{ url_for('recent_orders') }}">Recent Orders</a></li>
+              {% if current_user.username != "admin" %}
+                <li><a href="{{ url_for('history', start=1) }}">History</a></li>
+                <li><a href="{{ url_for('recent_orders') }}">Recent Orders</a></li>
+              {% endif %}
               <li><a href="{{ url_for('logout') }}">Logout</a></li>
             {% endif %}
           </ul>
