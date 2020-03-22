@@ -3,11 +3,11 @@
 
 {% block app_content %}
   <h1>History</h1>
-  <ol start={{ start }}>
-    {% if current_user.username=='admin' %}
-      <li>You added these dishes</li>
+  {% if current_user.username=='admin' %}
+      <p>You added these dishes</p>
     {% endif %}
-
+  
+  <ol start={{ start }}>
     {% for i in range(start, end) %}
       <li>At {{ moment(L[total-i][0].timestamp).format('LLLL') }}</li>
       <ul>
@@ -19,10 +19,12 @@
           {% endif %}
         {% endfor %}
       </ul>
-      <ul><li>Total cost: Rs. {{ L[total-i][0].total_amount }}</li></ul>
+      {% if current_user.username!='admin' %}
+        <ul><li>Total cost: Rs. {{ L[total-i][0].total_amount }}</li></ul>
 
-      {% if L[total-i][0].status==0 %}
-        <span style="color:orange;">Order Cancelled</span><br>
+        {% if L[total-i][0].status==0 %}
+          <span style="color:orange;">Order Cancelled</span><br>
+        {% endif %}
       {% endif %}
     {% endfor %}
 
@@ -32,9 +34,9 @@
       <a href="{{ url_for('history', start=1) }}">Previous</a>
     {% endif %}
 
-    {% if end <= (total//10)*10 %}
+    {% if end <= (total//10)*10+1 %}
       <a href="{{ url_for('history', start=end) }}">Next</a>
-    {% elif end != total %}
+    {% elif end != total+1 %}
       <a href="{{ url_for('history', start=(total//10)*10) }}">Next</a>
     {% endif %}
   </ol>

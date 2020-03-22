@@ -58,7 +58,7 @@ def index():
         for user in users:
             dishquantity = Quantity(quantity=0, dish=dish, customer=user)
             db.session.add(dishquantity)
-        history = History(customer=current_user)
+        history = History(customer=current_user, status=1)
         db.session.add(history)
         order = Orders(history=history, quantity=0, dish=dish)
         db.session.add(order)
@@ -120,7 +120,6 @@ def logout():
 
 
 @app.route('/register', methods=['GET', 'POST'])
-@login_required
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -249,7 +248,7 @@ def history(start):
     for history in histories:
         if history.status == 0.5:
             recent_order = RecentOrders.query \
-                .filter_by(id=history.recent_order_id).first()
+                .filter_by(id=history.recent_order_id).first_or_404()
             if recent_order.timestamp+timedelta(minutes=330) <= datetime.now():
                 orders = Orders.query.filter_by(history=history).all()
                 for dish in orders:
@@ -262,7 +261,10 @@ def history(start):
             L.append((history, orders))
 
     if not L:
-        flash("You do not order anything till now.")
+        if current_user.username == 'admin':
+            flash("You do not add any dish")
+        else:
+            flash("You do not order anything till now.")
         return redirect(url_for('index'))
 
     app.config['WAIT_TIME'] = wait_time
@@ -276,7 +278,7 @@ def history(start):
     if start+10<total:
         end = start+10
     else:
-        end = total
+        end = total+1
     return render_template('history.html', title='History', L=L,
         start=start, end=end, total=total)
 
