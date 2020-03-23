@@ -63,6 +63,7 @@ def index():
         order = Orders(history=history, quantity=0, dish=dish)
         db.session.add(order)
         db.session.commit()
+        flash('You add the dish {}'.format(dish.dishname))
     elif form1.validate_on_submit():
         return redirect(url_for('search', dishname=form1.search.data))
 
@@ -235,6 +236,8 @@ def remove(dishname):
         quantities = Quantity.query.filter_by(dish=dish).all()
         for quantity in quantities:
             db.session.delete(quantity)
+        history = History(customer=current_user, status=0, removed_dish=dish.dishname)
+        db.session.add(history)
         db.session.delete(dish)
         db.session.commit()
     return redirect(url_for('index'))

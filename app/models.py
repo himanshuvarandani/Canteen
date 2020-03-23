@@ -52,6 +52,7 @@ class History(db.Model):
     status = db.Column(db.Integer, default=0.5)
     recent_order_id = db.Column(db.Integer, db.ForeignKey('recent_orders.id'))
     total_amount = db.Column(db.Integer, default = 0)
+    removed_dish = db.Column(db.String(50), default='')
 
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
