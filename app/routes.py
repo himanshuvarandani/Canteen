@@ -22,11 +22,8 @@ def notification(app, wait_time, user_email):
         mail.send(msg)
 
 
-@app.route('/', methods=['GET', 'POST'])
-@app.route('/index', methods=['GET', 'POST'])
-@login_required
-def index():
-    wait_time = app.config['WAIT_TIME']
+def time_correction():
+    wait_time, t = app.config['WAIT_TIME'], 0
 
     recent_orders = RecentOrders.query.all()
     for recent_order in recent_orders:
@@ -37,13 +34,28 @@ def index():
                 wait_time -= int(dish.quantity)*int(dish.dish.timetaken)
             history.status = 1
             db.session.delete(recent_order)
-    if current_user.username != "admin":
-        if wait_time == 0:
-            flash('Your order will be accepted fast.')
-        else:
-            flash('Your order will be accepted after {} minutes'.format(wait_time))
+    
     app.config['WAIT_TIME'] = wait_time
     db.session.commit()
+
+    if recent_orders:
+        print(datetime.now(), recent_order.timestamp+timedelta(minutes=330))
+        t = (recent_order.timestamp+timedelta(minutes=330)-datetime.now()).total_seconds()
+        print(t//60+1)
+        return (t//60+1)
+    return 0
+
+
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
+@login_required
+def index():
+    t = time_correction()
+    if current_user.username != "admin":
+        if t == 0:
+            flash('Your order will be accepted fast.')
+        else:
+            flash('Your order will be accepted after {} minutes'.format(t))
 
     dishes = Dishes.query.all()
     quantities = Quantity.query.filter_by(customer=current_user).all()
@@ -58,7 +70,9 @@ def index():
         for user in users:
             dishquantity = Quantity(quantity=0, dish=dish, customer=user)
             db.session.add(dishquantity)
-        history = History(customer=current_user, status=1)
+        history = History(customer=current_user,
+            timestamp=(datetime.now()-timedelta(minutes=330)),
+            status=1)
         db.session.add(history)
         order = Orders(history=history, quantity=0, dish=dish)
         db.session.add(order)
@@ -187,8 +201,8 @@ def deletebutton(dishname, next_page):
 @app.route('/order', methods=['GET', 'POST'])
 @login_required
 def order():
-    flag, total_amount = 0, 0
-    wait_time = app.config['WAIT_TIME']
+    flag, total_amount, time_taken = 0, 0, 0
+    t = time_correction()
     if request.method == 'POST':
         dishes = Quantity.query.filter_by(customer=current_user).all()
         for dish in dishes:
@@ -198,11 +212,12 @@ def order():
                     recent_order = RecentOrders(customer=current_user,
                         timestamp=(datetime.now()-timedelta(minutes=330)))
                     history = History(customer=current_user,
+                        timestamp=(datetime.now()-timedelta(minutes=330)),
                         recent_order=recent_order)
                     db.session.add(recent_order)
                     db.session.add(history)
                     flag = 1
-                wait_time += int(dish.dish.timetaken)*int(dish.quantity)
+                time_taken += int(dish.dish.timetaken)*int(dish.quantity)
                 total_amount += int(dish.dish.amount)*int(dish.quantity)
                 order = Orders(history=history,
                     quantity=dish.quantity,
@@ -218,11 +233,11 @@ def order():
         else:
             user_email = current_user.email
             Thread(target=notification,
-                args=(app, wait_time, user_email)).start()
+                args=(app, t+time_taken, user_email)).start()
 
-            recent_order.timestamp += timedelta(minutes=wait_time)
+            recent_order.timestamp += timedelta(minutes=(t+time_taken))
             history.total_amount = total_amount
-            app.config['WAIT_TIME'] = wait_time
+            app.config['WAIT_TIME'] += time_taken
             db.session.commit()
     return redirect(url_for('index'))
 
@@ -236,7 +251,9 @@ def remove(dishname):
         quantities = Quantity.query.filter_by(dish=dish).all()
         for quantity in quantities:
             db.session.delete(quantity)
-        history = History(customer=current_user, status=0, removed_dish=dish.dishname)
+        history = History(customer=current_user,
+            timestamp=(datetime.now()-timedelta(minutes=330)),
+            status=0, removed_dish=dish.dishname)
         db.session.add(history)
         db.session.delete(dish)
         db.session.commit()
@@ -246,20 +263,10 @@ def remove(dishname):
 @app.route('/history/<start>')
 @login_required
 def history(start):
-    L, wait_time = [], app.config['WAIT_TIME']
+    L, t = [], time_correction()
     histories = History.query.filter_by(customer=current_user).all()
     for history in histories:
-        if history.status == 0.5:
-            recent_order = RecentOrders.query \
-                .filter_by(id=history.recent_order_id).first_or_404()
-            if recent_order.timestamp+timedelta(minutes=330) <= datetime.now():
-                orders = Orders.query.filter_by(history=history).all()
-                for dish in orders:
-                    wait_time -= int(dish.quantity)*int(dish.dish.timetaken)
-                history.status = 1
-                db.session.delete(recent_order)
-                L.append((history, orders))
-        else:
+        if history.status != 0.5:
             orders = Orders.query.filter_by(history=history).all()
             L.append((history, orders))
 
@@ -269,9 +276,6 @@ def history(start):
         else:
             flash("You do not order anything till now.")
         return redirect(url_for('index'))
-
-    app.config['WAIT_TIME'] = wait_time
-    db.session.commit()
 
     total = len(L)
     start = int(start)
@@ -289,22 +293,14 @@ def history(start):
 @app.route('/recent_orders', methods=['GET', 'POST'])
 @login_required
 def recent_orders():
-    L, wait_time = [], app.config['WAIT_TIME']
+    L, t = [], time_correction()
+
     recent_orders = RecentOrders.query.filter_by(customer=current_user).all()
     for recent_order in recent_orders:
         history = History.query.filter_by(recent_order=recent_order).first()
-        if recent_order.timestamp+timedelta(minutes=330) <= datetime.now():
-            orders = Orders.query.filter_by(history=history).all()
-            for dish in orders:
-                wait_time -= int(dish.quantity)*int(dish.dish.timetaken)
-            history.status = 1
-            db.session.delete(recent_order)
-        else:
-            orders = Orders.query.filter_by(history=history).all()
-            L.append((recent_order, history, orders))
-    app.config['WAIT_TIME'] = wait_time
-    db.session.commit()
-
+        orders = Orders.query.filter_by(history=history).all()
+        L.append((recent_order, history, orders))
+    
     if not L:
         flash("You do not order anything till now or your orders are \
             completed or cancelled.")
@@ -317,11 +313,13 @@ def recent_orders():
 @app.route('/cancel/<order_id>', methods=['GET', 'POST'])
 @login_required
 def cancel(order_id):
-    wait_time= app.config['WAIT_TIME']
+    wait_time = app.config['WAIT_TIME']
+
     recent_order = RecentOrders.query.filter_by(id=order_id).first()
     history = History.query.filter_by(recent_order=recent_order).first()
     flash('Your order at {} is cancelled'.format(history.timestamp))
     flash('Details:')
+
     orders = Orders.query.filter_by(history=history).all()
     for dish in orders:
         flash("{} {} {}".format(dish.quantity,
