@@ -5,21 +5,29 @@
   <h1>Recent Orders</h1>
   <ul>
     <ol>
-      {% for (recent_order, history, orders) in L %}
+      {% for i in range(total) %}
         <li>Order:</li>
         <ul>
-          <li>{{ moment(history.timestamp).calendar() }}</li>
+          <li>{{ moment(L[i][1].timestamp).calendar() }}</li>
           <li>Dishes</li>
           <ol>
-            {% for dish in orders %}
+            {% for dish in L[i][2] %}
               <li>{{ dish.quantity }} {{ dish.dish.dishname }} {{ dish.dish.amount*dish.quantity }} rupees</li>
             {% endfor %}
           </ol>
-          <li>Total Cost is: Rs. {{ history.total_amount }}</li>
-          <li>It will be ready {{ moment(recent_order.timestamp).fromNow() }}</li>
-          <form action="{{ url_for('cancel', order_id=recent_order.id) }}" method="post">
-            <input type="submit" name="" value="Cancel">
-          </form>
+          <li>Total Cost is: Rs. {{ L[i][1].total_amount }}</li>
+          <li>It will be ready {{ moment(L[i][0].timestamp).fromNow() }}</li>
+          {% if i==0 %}
+            {% if cancel %}
+              <form action="{{ url_for('cancel', order_id=L[i][0].id) }}" method="post">
+                <input type="submit" name="" value="Cancel">
+              </form>
+            {% endif %}
+          {% else %}
+            <form action="{{ url_for('cancel', order_id=L[i][0].id) }}" method="post">
+              <input type="submit" name="" value="Cancel">
+            </form>
+          {% endif %}
         </ul>
       {% endfor %}
     </ol>

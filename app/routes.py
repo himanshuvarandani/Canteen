@@ -39,9 +39,7 @@ def time_correction():
     db.session.commit()
 
     if recent_orders:
-        print(datetime.now(), recent_order.timestamp+timedelta(minutes=330))
         t = (recent_order.timestamp+timedelta(minutes=330)-datetime.now()).total_seconds()
-        print(t//60+1)
         return (t//60+1)
     return 0
 
@@ -306,14 +304,19 @@ def recent_orders():
             completed or cancelled.")
         flash("See the status in history.")
         return redirect(url_for('index'))
+    
+    cancel = True
+    recent_order = RecentOrders.query.first()
+    if recent_order.customer == current_user:
+        cancel = False
 
-    return render_template('recent_orders.html', title='Recent Orders', L=L)
+    return render_template('recent_orders.html', title='Recent Orders', L=L, cancel=cancel, total=len(L))
 
 
 @app.route('/cancel/<order_id>', methods=['GET', 'POST'])
 @login_required
 def cancel(order_id):
-    wait_time = app.config['WAIT_TIME']
+    time_taken, t = 0, time_correction()
 
     recent_order = RecentOrders.query.filter_by(id=order_id).first()
     history = History.query.filter_by(recent_order=recent_order).first()
@@ -325,10 +328,22 @@ def cancel(order_id):
         flash("{} {} {}".format(dish.quantity,
             dish.dish.dishname,
             dish.dish.amount))
-        wait_time -= int(dish.quantity)*int(dish.dish.timetaken)
+        time_taken += int(dish.quantity)*int(dish.dish.timetaken)
     flash('Total cost: {}'.format(history.total_amount))
-    app.config['WAIT_TIME'] = wait_time
+    app.config['WAIT_TIME'] -= time_taken
     history.status = 0
+
+    flag = 0
+    recent_orders = RecentOrders.query.all()
+    for recent_order1 in recent_orders:
+        if flag == 0:
+            if recent_order1 == recent_order:
+                flag = 1
+        else:
+            recent_order1.timestamp -= timedelta(minutes=time_taken)
+    
     db.session.delete(recent_order)
     db.session.commit()
+
+
     return redirect(url_for('index'))
