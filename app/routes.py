@@ -16,7 +16,9 @@ from werkzeug.urls import url_parse
 def notification(app, wait_time, user_email):
     time.sleep((wait_time-1)*60)
     with app.app_context():
-        msg = Message('Order Completion', sender=app.config['ADMINS'][0], recipients=[user_email])
+        msg = Message('Order Completion',
+            sender=app.config['ADMINS'][0],
+            recipients=[user_email])
         msg.body = 'Your order is completed.'
         msg.html = '<h1>Order Completion</h1>'
         mail.send(msg)
@@ -34,12 +36,14 @@ def time_correction():
                 wait_time -= int(dish.quantity)*int(dish.dish.timetaken)
             history.status = 1
             db.session.delete(recent_order)
-    
+
     app.config['WAIT_TIME'] = wait_time
     db.session.commit()
 
     if recent_orders:
-        t = (recent_order.timestamp+timedelta(minutes=330)-datetime.now()).total_seconds()
+        t = (recent_order.timestamp
+            + timedelta(minutes=330)
+            - datetime.now()).total_seconds()
         return (t//60+1)
     return 0
 
@@ -298,19 +302,22 @@ def recent_orders():
         history = History.query.filter_by(recent_order=recent_order).first()
         orders = Orders.query.filter_by(history=history).all()
         L.append((recent_order, history, orders))
-    
+
     if not L:
         flash("You do not order anything till now or your orders are \
             completed or cancelled.")
         flash("See the status in history.")
         return redirect(url_for('index'))
-    
+
     cancel = True
     recent_order = RecentOrders.query.first()
     if recent_order.customer == current_user:
         cancel = False
 
-    return render_template('recent_orders.html', title='Recent Orders', L=L, cancel=cancel, total=len(L))
+    return render_template('recent_orders.html',
+        title='Recent Orders',
+        L=L, cancel=cancel,
+        total=len(L))
 
 
 @app.route('/cancel/<order_id>', methods=['GET', 'POST'])
@@ -341,7 +348,7 @@ def cancel(order_id):
                 flag = 1
         else:
             recent_order1.timestamp -= timedelta(minutes=time_taken)
-    
+
     db.session.delete(recent_order)
     db.session.commit()
 
