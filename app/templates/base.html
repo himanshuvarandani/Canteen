@@ -6,6 +6,12 @@
 {% endblock %}
 
 
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='app.css') }}">
+{% endblock %}
+
+
 {% block navbar %}
   <nav class="navbar navbar-default">
       <div class="container">

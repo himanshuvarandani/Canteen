@@ -1,0 +1,8 @@
+body{
+    background-image: url("/static/Screenshot_20200326-184116.png");
+    background-repeat: no-repeat;
+}
+
+.dish{
+    width: 30%;
+}

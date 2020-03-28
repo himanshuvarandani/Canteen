@@ -28,7 +28,7 @@ To send mail direct to user email
     export MAIL_USERNAME=<your-gmail-username>
     export MAIL_PASSWORD=<your-gmail-password>
         
-To test mail on local server
+To test mail on local server (debug mode should be off)
 
     export MAIL_SERVER=localhost
     export MAIL_PORT=8025
@@ -37,6 +37,9 @@ To test mail on local server
         python -m smtpd -n -c DebuggingServer localhost:8025
     
 For Windows, use "set" instead of "export".
+
+# Debug Mode
+    export FLASK_DEBUG=1
 
 # Run Project
     flask run
