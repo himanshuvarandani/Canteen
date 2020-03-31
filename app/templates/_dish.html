@@ -1,19 +1,24 @@
-<h3>{{ dish.dishname }}</h3>
-<p>Amount: {{ dish.amount }}</p>
-
-{% if current_user.username!='admin' %}
-  <form action="{{ url_for('addbutton', dishname=dish.dishname, next_page=next_page) }}" method="post">
-    <input type="submit" value="add">
+<div class="container dish">
+  <form action="{{ url_for('update', dishname=dish.dishname, next_page=next_page) }}" method="post">
+    <div class="row">
+      <div class="col-xs-8 col-sm-9 col-lg-10">
+        <h4>{{ dish.dishname }}</h4>
+        <p>Amount: {{ dish.amount }}</p>
+      </div>
+      {% if not current_user.is_anonymous %}
+        <div class="col-xs-4 col-sm-3 col-lg-2">
+          {% if current_user.username!='admin' %}
+            <input class="btn" type="submit" name="update" value="add"><br>
+            {% if quantity.quantity %}
+              <p>Quantity: {{ quantity.quantity }}</p>
+              <input class="btn" type="submit" name="update" value="delete">
+            {% else %}
+              <br>
+              <input class="btn" type="submit" name="update" value="delete" disabled>
+            {% endif %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
   </form>
-
-  {% if quantity.quantity %}
-    <form action="{{ url_for('deletebutton', dishname=dish.dishname, next_page=next_page) }}" method="post">
-      <input type="submit" value="delete">
-    </form>
-    <label>{{ quantity.quantity }}</label>
-  {% endif %}
-{% else %}
-  <form action="{{ url_for('remove', dishname=dish.dishname) }}" method="post">
-    <input type="submit" value="Remove">
-  </form>
-{% endif %}
+</div>

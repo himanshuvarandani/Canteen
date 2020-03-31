@@ -50,90 +50,105 @@ def time_correction():
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
-@login_required
 def index():
     t = time_correction()
-    if current_user.username != "admin":
-        if t == 0:
-            flash('Your order will be accepted fast.')
-        else:
-            flash('Your order will be accepted after {} minutes'.format(t))
 
     dishes = Dishes.query.all()
-    quantities = Quantity.query.filter_by(customer=current_user).all()
-    form = DishForm()
-    form1 = SearchForm()
 
-    if form.validate_on_submit():
-        dish = Dishes(dishname=form.dishname.data, amount=form.amount.data,
-            timetaken=form.timetaken.data, quantity=0)
-        db.session.add(dish)
-        users = User.query.all()
-        for user in users:
-            dishquantity = Quantity(quantity=0, dish=dish, customer=user)
-            db.session.add(dishquantity)
-        history = History(customer=current_user,
-            timestamp=(datetime.now()-timedelta(minutes=330)),
-            status=1)
-        db.session.add(history)
-        order = Orders(history=history, quantity=0, dish=dish)
-        db.session.add(order)
-        db.session.commit()
-        flash('You add the dish {}'.format(dish.dishname))
-    elif form1.validate_on_submit():
+    form1 = SearchForm()
+    if form1.validate_on_submit():
         return redirect(url_for('search', dishname=form1.search.data))
 
-    return render_template('index.html', title='Home',
-        dishes=dishes, form=form, quantities=quantities,
-        form1=form1, next_page='index')
+    if not current_user.is_anonymous:
+        form = DishForm()
+        if form.validate_on_submit():
+            dish = Dishes(dishname=form.dishname.data, amount=form.amount.data,
+                timetaken=form.timetaken.data, quantity=0)
+            db.session.add(dish)
+            users = User.query.all()
+            for user in users:
+                dishquantity = Quantity(quantity=0, dish=dish, customer=user)
+                db.session.add(dishquantity)
+            history = History(customer=current_user,
+                timestamp=(datetime.now()-timedelta(minutes=330)),
+                status=1)
+            db.session.add(history)
+            order = Orders(history=history, quantity=0, dish=dish)
+            db.session.add(order)
+            db.session.commit()
+            flash('You add the dish {}'.format(dish.dishname))
+    
+        if current_user.username != "admin":
+            if t == 0:
+                flash('Your order will be accepted fast.')
+            else:
+                flash('Your order will be accepted after {} minutes'.format(t))
+        
+        quantities = Quantity.query.filter_by(customer=current_user).all()
+
+        return render_template('index.html', title='Home',
+            dishes=dishes, form=form, quantities=quantities,
+            form1=form1, next_page='index')
+    else:
+        form2 = LoginForm()
+        if form2.validate_on_submit():
+            user = User.query.filter_by(username=form2.username.data).first()
+            if user is None or not user.check_password(form2.password.data):
+                flash('Invalid username or password')
+                return redirect(url_for('index'))
+
+            login_user(user, remember=form2.remember_me.data)
+            db.session.commit()
+
+            quantities = Quantity.query.filter_by(customer=current_user).all()
+            return render_template('index.html', title='Home',
+                dishes=dishes, form1=form1, quantities=quantities,
+                form2=form2, next_page='index')
+
+        return render_template('index.html', title='Home',
+            dishes=dishes, form1=form1,
+            form2=form2, next_page='index')
 
 
 @app.route('/search/<dishname>', methods=["GET", "POST"])
-@login_required
 def search(dishname):
     form = SearchForm()
     if form.validate_on_submit():
         return redirect(url_for('search', dishname=form.search.data))
+    
+    form2 = LoginForm()
+    if form2.validate_on_submit():
+        user = User.query.filter_by(username=form2.username.data).first()
+        if user is None or not user.check_password(form2.password.data):
+            flash('Invalid username or password')
+            return redirect(url_for('index'))
+            
+        login_user(user, remember=form2.remember_me.data)
+        db.session.commit()
 
     dishes = Dishes.query.all()
     for dish in dishes:
         if dish.dishname.lower()==dishname.lower():
-            quantity = Quantity.query.filter_by(customer=current_user) \
-                .filter_by(dish=dish).first()
-            return render_template('search.html', title='Search',
-                dish=dish, quantity=quantity,
-                next_page='search', form=form)
+            if not current_user.is_anonymous:
+                quantity = Quantity.query.filter_by(customer=current_user) \
+                    .filter_by(dish=dish).first()
+                return render_template('search.html', title='Search',
+                    dish=dish, quantity=quantity,
+                    next_page='search', form=form)
+            else:
+                return render_template('search.html', title='Search',
+                    dish=dish, next_page='search',
+                    form=form, form2=form2)
 
     flash("Sorry, this dish is not available here.")
     return redirect(url_for('index'))
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password')
-            return redirect(url_for('login'))
-
-        login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('index')
-        return redirect(next_page)
-
-    return render_template('login.html', title='Sign In', form=form)
 
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -159,9 +174,9 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/addbutton/<dishname>/<next_page>', methods=['GET', 'POST'])
+@app.route('/update/<dishname>/<next_page>', methods=['GET', 'POST'])
 @login_required
-def addbutton(dishname, next_page):
+def update(dishname, next_page):
     if request.method == 'POST':
         dish = Dishes.query.filter_by(dishname=dishname).first()
         dishquantity = Quantity.query.filter_by(customer=current_user) \
@@ -170,28 +185,11 @@ def addbutton(dishname, next_page):
             dishquantity = Quantity(quantity=1, dish=dish,
                 customer=current_user)
         else:
-            dishquantity.quantity += 1
-        db.session.commit()
-
-    if next_page=='index':
-        return redirect(url_for('index'))
-    else:
-        return redirect(url_for('search', dishname=dishname))
-
-
-@app.route('/deletebutton/<dishname>/<next_page>', methods=['GET', 'POST'])
-@login_required
-def deletebutton(dishname, next_page):
-    if request.method == 'POST':
-        dish = Dishes.query.filter_by(dishname=dishname).first()
-        dishquantity = Quantity.query.filter_by(customer=current_user) \
-            .filter_by(dish=dish).first()
-        if dishquantity is None:
-            dishquantity = Quantity(quantity=1, dish=dish,
-                customer=current_user)
-        else:
-            if dishquantity.quantity>0:
-                dishquantity.quantity -= 1
+            if request.form['update'] == 'add':
+                dishquantity.quantity += 1
+            else:
+                if dishquantity.quantity>0:
+                    dishquantity.quantity -= 1
         db.session.commit()
 
     if next_page=='index':
@@ -225,9 +223,10 @@ def order():
                     quantity=dish.quantity,
                     dish=dish.dish)
                 db.session.add(order)
-                flash("{} {} {}".format(dish.quantity,
+                flash("{} {} Rs.{}".format(dish.quantity,
                     dish.dish.dishname,
                     dish.quantity*dish.dish.amount))
+                flash("Total amount is Rs.{}".format(total_amount))
                 dish.quantity = 0
 
         if flag==0:

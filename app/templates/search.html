@@ -8,7 +8,12 @@
       {{ wtf.quick_form(form) }}
     </div>
   </div>
+  <br>
 
   {% include "_dish.html" %}<br>
   <a href="{{ url_for('index') }}">Back</a>
+
+  {% if current_user.is_anonymous %}
+    {% include "login.html" %}
+  {% endif %}
 {% endblock %}

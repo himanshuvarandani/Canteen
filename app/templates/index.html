@@ -3,34 +3,40 @@
 
 
 {% block app_content %}
-    <h1>Dishes</h1>
+  <h1>Dishes</h1>
+  <div class="row">
+    <div class="col-sm-9 col-md-6 col-lg-4">
+      {{ wtf.quick_form(form1) }}
+    </div>
+  </div>
+  <br>
+
+  {% if not current_user.is_anonymous %}
+    {% for dish in dishes %}
+      {% for quantity in quantities %}
+        {% if quantity.dish.dishname==dish.dishname %}
+          {% include "_dish.html" %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  {% else %}
+    {% for dish in dishes %}
+      {% include "_dish.html" %}
+    {% endfor %}
+  {% endif %}
+  <br>
+
+  {% if current_user.username=='admin' %}
     <div class="row">
       <div class="col-sm-9 col-md-6 col-lg-4">
-        {{ wtf.quick_form(form1) }}
+        {{ wtf.quick_form(form) }}
       </div>
     </div>
-    <div class="row">
-      {% for dish in dishes %}
-        {% for quantity in quantities %}
-          {% if quantity.dish.dishname==dish.dishname %}
-            <div class="col-sm-6 col-md-3 dish">
-              {% include "_dish.html" %}
-            </div>
-          {% endif %}
-        {% endfor %}
-      {% endfor %}
-    </div>
-    <br>
-
-    {% if current_user.username=='admin' %}
-      <div class="row">
-        <div class="col-sm-9 col-md-6 col-lg-4">
-          {{ wtf.quick_form(form) }}
-        </div>
-      </div>
-    {% else %}
-      <form action="{{ url_for('order') }}" method="post">
-        <input type="submit" name="" value="Order">
-      </form>
-    {% endif %}
+  {% elif not current_user.is_anonymous %}
+    <form action="{{ url_for('order') }}" method="post">
+      <input class="btn" type="submit" value="Order">
+    </form>
+  {% else %}
+    {% include "login.html" %}
+  {% endif %}
 {% endblock %}
