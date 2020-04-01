@@ -13,10 +13,6 @@ img {
   border-radius: 15px;
 }
 
-.active {
-  background-color: #717171;
-}
-
 .btn {
   background-color: navy;
   color: #fff;
@@ -43,6 +39,10 @@ img {
   border-radius: 50%;
   display: inline-block;
   transition: background-color 0.6s ease;
+}
+
+.active {
+  background-color: #717171;
 }
 
 /* Hide the images by default */

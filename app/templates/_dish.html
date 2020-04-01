@@ -5,20 +5,24 @@
         <h4>{{ dish.dishname }}</h4>
         <p>Amount: {{ dish.amount }}</p>
       </div>
-      {% if not current_user.is_anonymous %}
-        <div class="col-xs-4 col-sm-3 col-lg-2">
+      <div class="col-xs-4 col-sm-3 col-lg-2">
+        {% if not current_user.is_anonymous %}
           {% if current_user.username!='admin' %}
-            <input class="btn" type="submit" name="update" value="add"><br>
-            {% if quantity.quantity %}
-              <p>Quantity: {{ quantity.quantity }}</p>
-              <input class="btn" type="submit" name="update" value="delete">
-            {% else %}
-              <br>
-              <input class="btn" type="submit" name="update" value="delete" disabled>
+            {% if current_user.username!='admin' %}
+              <input class="btn" type="submit" name="update" value="Add"><br>
+              {% if quantity.quantity %}
+                <p>Quantity: {{ quantity.quantity }}</p>
+                <input class="btn" type="submit" name="update" value="Delete">
+              {% else %}
+                <br>
+                <input class="btn" type="submit" name="update" value="Delete" disabled>
+              {% endif %}
             {% endif %}
+          {% else %}
+            <input class="btn" type="submit" name="update" value="Remove">
           {% endif %}
-        </div>
-      {% endif %}
+        {% endif %}
+      </div>
     </div>
   </form>
 </div>
