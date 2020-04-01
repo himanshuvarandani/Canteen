@@ -59,51 +59,53 @@ def index():
     if form1.validate_on_submit():
         return redirect(url_for('search', dishname=form1.search.data))
 
-    if current_user.is_anonymous:
-        form2 = LoginForm()
-        if form2.validate_on_submit():
-            user = User.query.filter_by(username=form2.username.data).first()
-            if user is None or not user.check_password(form2.password.data):
-                flash('Invalid username or password')
-                return redirect(url_for('index'))
-
-            login_user(user, remember=form2.remember_me.data)
-            db.session.commit()
+    form2 = LoginForm()
+    if form2.validate_on_submit():
+        user = User.query.filter_by(username=form2.username.data).first()
+        if user is None or not user.check_password(form2.password.data):
+            flash('Invalid username or password')
             return redirect(url_for('index'))
 
+        login_user(user, remember=form2.remember_me.data)
+        db.session.commit()
+        return redirect(url_for('index'))
+
+    form = DishForm()
+    if form.validate_on_submit():
+        dish = Dishes(dishname=form.dishname.data, amount=form.amount.data,
+            timetaken=form.timetaken.data, quantity=0)
+        db.session.add(dish)
+
+        users = User.query.all()
+        for user in users:
+            dishquantity = Quantity(quantity=0, dish=dish, customer=user)
+            db.session.add(dishquantity)
+
+        history = History(customer=current_user,
+            timestamp=(datetime.now()-timedelta(minutes=330)),
+            status=1, dishname=dish.dishname)
+        db.session.add(history)
+
+        db.session.commit()
+
+        flash('You added the dish {}'.format(dish.dishname))
+        return redirect(url_for('index'))
+
+    if current_user.is_anonymous:
         return render_template('index.html', title='Home',
             dishes=dishes, form1=form1,
             form2=form2, next_page='index')
-    else:
-        form = DishForm()
-        if form.validate_on_submit():
-            dish = Dishes(dishname=form.dishname.data, amount=form.amount.data,
-                timetaken=form.timetaken.data, quantity=0)
-            db.session.add(dish)
-            users = User.query.all()
-            for user in users:
-                dishquantity = Quantity(quantity=0, dish=dish, customer=user)
-                db.session.add(dishquantity)
-            history = History(customer=current_user,
-                timestamp=(datetime.now()-timedelta(minutes=330)),
-                status=1)
-            db.session.add(history)
-            order = Orders(history=history, quantity=0, dish=dish)
-            db.session.add(order)
-            db.session.commit()
-            flash('You add the dish {}'.format(dish.dishname))
-    
-        if current_user.username != "admin":
-            if t == 0:
-                flash('Your order will be accepted fast.')
-            else:
-                flash('Your order will be accepted after {} minutes'.format(t))
+    elif current_user.username != "admin":
+        if t == 0:
+            flash('Your order will be accepted fast.')
+        else:
+            flash('Your order will be accepted after {} minutes'.format(t))
         
-        quantities = Quantity.query.filter_by(customer=current_user).all()
+    quantities = Quantity.query.filter_by(customer=current_user).all()
 
-        return render_template('index.html', title='Home',
-            dishes=dishes, form=form, quantities=quantities,
-            form1=form1, next_page='index')
+    return render_template('index.html', title='Home',
+        dishes=dishes, form=form, quantities=quantities,
+        form1=form1, next_page='index')
 
 
 @app.route('/search/<dishname>', methods=["GET", "POST"])
@@ -185,7 +187,7 @@ def update(dishname, next_page):
             
             history = History(customer=current_user,
                 timestamp=(datetime.now()-timedelta(minutes=330)),
-                status=0, removed_dish=dish.dishname)
+                status=0, dishname=dish.dishname)
 
             db.session.add(history)
             db.session.delete(dish)

@@ -10,11 +10,9 @@
       {% if current_user.username=='admin' %}
         <ul>
           {% if L[total-i][0].status==1 %}
-          {% for order in L[total-i][1] %}
-            <li>You add the dish {{ order.dish.dishname }}</li>
-          {% endfor %}
+            <li>You added the dish {{ L[total-i][0].dishname }}</li>
           {% else %}
-            <li>You remove the dish {{ L[total-i][0].removed_dish }}</li>
+            <li>You removed the dish {{ L[total-i][0].dishname }}</li>
           {% endif %}
         </ul>
       {% else %}

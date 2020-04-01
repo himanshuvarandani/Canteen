@@ -32,7 +32,7 @@ class RegistrationForm(FlaskForm):
 class DishForm(FlaskForm):
     dishname = StringField('Dish Name', validators=[DataRequired()])
     amount = IntegerField('Amount', validators=[DataRequired()])
-    timetaken = IntegerField('Time taken(in minute)', validators=[DataRequired()])
+    timetaken = IntegerField('Time taken(in minutes)', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
     def validate_dishname(self, dishname):
