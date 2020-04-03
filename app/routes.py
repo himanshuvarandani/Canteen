@@ -72,7 +72,7 @@ def index():
 
     form = DishForm()
     if form.validate_on_submit():
-        dish = Dishes(dishname=form.dishname.data, amount=form.amount.data,
+        dish = Dishes(dishname=form.dishname.data.upper(), amount=form.amount.data,
             timetaken=form.timetaken.data, quantity=0)
         db.session.add(dish)
 
@@ -114,19 +114,9 @@ def search(dishname):
     if form.validate_on_submit():
         return redirect(url_for('search', dishname=form.search.data))
     
-    form2 = LoginForm()
-    if form2.validate_on_submit():
-        user = User.query.filter_by(username=form2.username.data).first()
-        if user is None or not user.check_password(form2.password.data):
-            flash('Invalid username or password')
-            return redirect(url_for('index'))
-            
-        login_user(user, remember=form2.remember_me.data)
-        db.session.commit()
-
     dishes = Dishes.query.all()
     for dish in dishes:
-        if dish.dishname.lower()==dishname.lower():
+        if dish.dishname.upper()==dishname.upper():
             if not current_user.is_anonymous:
                 quantity = Quantity.query.filter_by(customer=current_user) \
                     .filter_by(dish=dish).first()
@@ -135,8 +125,7 @@ def search(dishname):
                     next_page='search', form=form)
             else:
                 return render_template('search.html', title='Search',
-                    dish=dish, next_page='search',
-                    form=form, form2=form2)
+                    dish=dish, next_page='search', form=form)
 
     flash("Sorry, this dish is not available here.")
     return redirect(url_for('index'))
@@ -194,6 +183,8 @@ def update(dishname, next_page):
             db.session.commit()
 
             return redirect(url_for('index'))
+        elif request.form['update'] == 'Modify':
+            return redirect(url_for('modify', dishname=dishname))
         else:
             dishquantity = Quantity.query.filter_by(customer=current_user) \
                 .filter_by(dish=dish).first()
@@ -213,6 +204,21 @@ def update(dishname, next_page):
                 return redirect(url_for('index'))
             else:
                 return redirect(url_for('search', dishname=dishname))
+
+
+@app.route('/modify/<dishname>', methods=['GET', 'POST'])
+@login_required
+def modify(dishname):
+    dish = Dishes.query.filter_by(dishname=dishname).first()
+    form = DishForm()
+    if form.validate_on_submit():
+        dish.dishname = form.dishname.data.upper()
+        dish.amount = form.amount.data
+        dish.timetaken = form.timetaken.data
+
+        db.session.commit()
+        return redirect(url_for('index'))
+    return render_template('modify.html', form=form, title='Modify', dish=dish)
 
 
 @app.route('/order', methods=['GET', 'POST'])

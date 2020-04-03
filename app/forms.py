@@ -1,5 +1,6 @@
 from app.models import User, Dishes
 from flask_wtf import FlaskForm
+from flask import request, url_for
 from wtforms import BooleanField, IntegerField, PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 
@@ -36,9 +37,10 @@ class DishForm(FlaskForm):
     submit = SubmitField('Submit')
 
     def validate_dishname(self, dishname):
-        dish = Dishes.query.filter_by(dishname=dishname.data).first()
+        dish = Dishes.query.filter_by(dishname=dishname.data.upper()).first()
         if dish is not None:
-            raise ValidationError('This dish is already exist.')
+            if url_for('modify', dishname=dish.dishname) not in request.base_url:
+                raise ValidationError('This dish is already exist.')
 
 
 class SearchForm(FlaskForm):
