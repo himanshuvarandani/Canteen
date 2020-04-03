@@ -11,8 +11,10 @@
         <ul>
           {% if L[total-i][0].status==1 %}
             <li>You added the dish {{ L[total-i][0].dishname }}</li>
-          {% else %}
+          {% elif L[total-i][0].status==0 %}
             <li>You removed the dish {{ L[total-i][0].dishname }}</li>
+          {% else %}
+            <li>You modified the dish {{ L[total-i][0].dishname }}</li>
           {% endif %}
         </ul>
       {% else %}

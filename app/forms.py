@@ -34,7 +34,7 @@ class DishForm(FlaskForm):
     dishname = StringField('Dish Name', validators=[DataRequired()])
     amount = IntegerField('Amount', validators=[DataRequired()])
     timetaken = IntegerField('Time taken(in minutes)', validators=[DataRequired()])
-    submit = SubmitField('Submit')
+    submit = SubmitField('Add')
 
     def validate_dishname(self, dishname):
         dish = Dishes.query.filter_by(dishname=dishname.data.upper()).first()

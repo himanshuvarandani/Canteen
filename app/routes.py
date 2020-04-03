@@ -212,6 +212,11 @@ def modify(dishname):
     dish = Dishes.query.filter_by(dishname=dishname).first()
     form = DishForm()
     if form.validate_on_submit():
+        history = History(customer=current_user,
+            timestamp=(datetime.now()-timedelta(minutes=330)),
+            dishname=dish.dishname, status=2)
+        db.session.add(history)
+        
         dish.dishname = form.dishname.data.upper()
         dish.amount = form.amount.data
         dish.timetaken = form.timetaken.data

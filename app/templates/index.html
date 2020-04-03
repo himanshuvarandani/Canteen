@@ -6,7 +6,13 @@
   <h1>Dishes</h1>
   <div class="row">
     <div class="col-sm-9 col-md-6 col-lg-4">
-      {{ wtf.quick_form(form1) }}
+      <form class="form" method="post" id="form1" class="form" role="form">
+        {{ form1.hidden_tag() }}
+        {{ wtf.form_errors(form1, hiddens="only") }}
+      
+        {{ wtf.form_field(form1.search) }}
+        {{ wtf.form_field(form1.submit, id="search_dish") }}
+      </form>
     </div>
   </div>
   <br>
@@ -24,12 +30,21 @@
       {% include "_dish.html" %}
     {% endfor %}
   {% endif %}
-  <br>
+  <br><br>
 
   {% if current_user.username=='admin' %}
     <div class="row">
       <div class="col-sm-9 col-md-6 col-lg-4">
-        {{ wtf.quick_form(form) }}
+        <h3 align="center">Add New Dish</h3>
+        <form class="form" method="post" id="form" class="form" role="form">
+          {{ form.hidden_tag() }}
+          {{ wtf.form_errors(form, hiddens="only") }}
+        
+          {{ wtf.form_field(form.dishname) }}
+          {{ wtf.form_field(form.amount) }}
+          {{ wtf.form_field(form.timetaken) }}
+          {{ wtf.form_field(form.submit, id="add_new_dish") }}
+        </form>
       </div>
     </div>
   {% elif not current_user.is_anonymous %}
